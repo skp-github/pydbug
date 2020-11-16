@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+
+    <div class="row" style="margin-top:2%">
+        <div class="col-xl-12">
+
+            <!--begin::Portlet-->
+            <div class="kt-portlet">
+                <div class="kt-portlet__head">
+                    <div class="kt-portlet__head-label">
+                        <h3 class="kt-portlet__head-title">
+                            Open Requirements List
+                        </h3>
+                    </div>
+                </div>
+                <div class="kt-portlet__body">
+
+
+                    <!--begin::Section-->
+                    <div class="kt-section">
+                        <div class="kt-section__content">
+                            <table class="table">
+                                <thead class="thead-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Title</th>
+                                    <th>Priority</th>
+                                    <th>Created By</th>
+                                    <th>Status</th>
+                                    <th>Expected Date(mm/dd/yyyy)</th>
+                                    <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for obj in object_list %}
+
+                                    <tr>
+                                        <th scope="row">{{ forloop.counter }}</th>
+                                        <td>{{ obj }}</td>
+                                        <td>
+                                            <div style="width:100%;float:left;text-align:center">
+                                                <span class="kt-badge kt-badge--{{ obj.priority_icon }} kt-badge--md kt-badge-inline">{{ obj.priority_to_name|first }}</span>
+                                            </div>
+                                        </td>
+                                        <td>{{ obj.created_by.get_full_name }}</td>
+                                        <td>
+                                            {% if obj.expected_date %}
+                                                <span class="kt-badge kt-badge--success kt-badge--inline kt-badge--pill kt-badge--rounded">Date Updated</span>
+                                             {% else %}
+                                                <span class="kt-badge kt-badge--danger kt-badge--inline kt-badge--pill kt-badge--rounded">Date Not Updated</span>
+                                            {% endif %}
+
+                                        </td>
+                                        <td>{{ obj.expected_date|date:"d/m/Y" }}</td>
+                                        <td>
+                                            <div class="dropdown dropdown-inline">
+                                                <button type="button"
+                                                        class="btn btn-hover-brand btn-elevate-hover btn-icon btn-sm btn-icon-md btn-circle"
+                                                        data-toggle="dropdown" aria-haspopup="true"
+                                                        aria-expanded="false">
+                                                    <i class="flaticon-more-1"></i>
+                                                </button>
+                                                <div class="dropdown-menu dropdown-menu-right">
+                                                    <a class="dropdown-item"
+                                                       href="{% url 'open_requirement_detail' pk=obj.id team_id=team_id %}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                             width="24px" height="24px" viewBox="0 0 24 24"
+                                                             version="1.1" class="kt-svg-icon">
+                                                            <g stroke="none" stroke-width="1" fill="none"
+                                                               fill-rule="evenodd">
+                                                                <polygon id="Bound" points="0 0 24 0 24 24 0 24"/>
+                                                                <path d="M18,6 L11,6 C10.3333333,5.88561808 10,5.55228475 10,5 C10,4.44771525 10.3333333,4.11438192 11,4 L20,4 L20,13 C20,13.6666667 19.6666667,14 19,14 C18.3333333,14 18,13.6666667 18,13 L18,6 Z M6,18 L13,18 C13.6666667,18.1143819 14,18.4477153 14,19 C14,19.5522847 13.6666667,19.8856181 13,20 L4,20 L4,11 C4,10.3333333 4.33333333,10 5,10 C5.66666667,10 6,10.3333333 6,11 L6,18 Z"
+                                                                      id="Combined-Shape" fill="#000000"
+                                                                      fill-rule="nonzero"/>
+                                                                <rect id="Rectangle-15" fill="#000000" opacity="0.3"
+                                                                      transform="translate(12.000000, 12.000000) rotate(-45.000000) translate(-12.000000, -12.000000) "
+                                                                      x="7" y="11" width="10" height="2" rx="1"/>
+                                                            </g>
+                                                        </svg>
+                                                        View Detail</a>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                    </tr>
+                                {% endfor %}
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!--end::Section-->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+
+{% endblock %}

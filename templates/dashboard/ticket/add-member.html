@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block js %}
+    {{ block.super }}
+    <script src="{% static "/js/select2.min.js" %}"></script>
+    <script src="{% static "/js/init-select2.js" %}"></script>
+    <script src="{% static "/js/jquery.knob.min.js" %}"></script>
+    <script src="{% static "/js/jquery.ui.widget.js" %}"></script>
+    <script src="{% static "/js/jquery.iframe-transport.js" %}"></script>
+    <script src="{% static "/js/jquery.fileupload.js" %}"></script>
+    <script src="{% static "/js/jquery.fileupload.js" %}"></script>
+
+
+
+{% endblock %}
+{% block extrajs %}
+    <script>
+    /* TODO: access type check to stop request if sttus is not changed */
+
+        function update_user_access(obj_id, access_type) {
+            var access_id = '#' + obj_id + '-access-type-update'
+            $.ajax({
+                url: '/ticket/update-user-access/',
+                type: "PATCH",
+                dataType: "json",
+                data: JSON.stringify({
+                    old_status: access_type,
+                    status_type: $(access_id).val(),
+                    user_id: obj_id
+                }),
+                contentType: "application/json",
+                headers: {
+                    "X-CSRFToken": $("[name=csrfmiddlewaretoken]").val()
+                },
+                success: function (data) {
+                    console.log(data)
+                }
+            });
+
+        }
+
+        var selected_users_list = []
+        $(document).ready(function () {
+
+
+            $('#add_member').select2({
+
+                ajax: {
+                    url: '/api/profile/?project_id=' + window.location.pathname.split("/").splice(-2)[0],
+                    processResults: function (data) {
+                        return {
+                            results: data.results
+                        };
+                    }
+                }
+            });
+
+
+            $('#create_ticket').click(function (e) {
+                $('#create_ticket_form').submit()
+                e.preventDefault()
+
+            });
+
+            $("#add_member_button").click(function () {
+
+                $.ajax({
+                    url: "/ticket/update-user-access/",
+                    type: "POST",
+                    dataType: "json",
+                    data: JSON.stringify({
+                        status_type: $("#access_type").val(),
+                        user_id: $("#add_member").val(),
+                        team_id: window.location.pathname.split("/").splice(-2)[0]
+                    }),
+                    contentType: "application/json",
+                    headers: {
+                        "X-CSRFToken": $("[name=csrfmiddlewaretoken]").val()
+                    },
+                    success: function (data) {
+                       location.reload();
+                    }
+                });
+
+            });
+        });
+
+
+    </script>
+{% endblock %}
+{% block content %}
+
+
+    {% csrf_token %}
+    <!-- Header -->
+    <div class="header bg-gradient-primary pb-6 pt-1 "></div>
+
+    <div class="kt-portlet">
+        <div class="kt-portlet__head">
+            <div class="kt-portlet__head-label">
+                <h3 class="kt-portlet__head-title">
+                    New Member
+                </h3>
+            </div>
+        </div>
+        <div class="kt-portlet__body">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label>Add Member</label>
+                        <select class="form-control" style="text-align-last: center" name="ticket_type"
+                                id="add_member" required>
+                            <option value="0">Please Select</option>
+
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label>Add Access Type</label>
+                        <select class="form-control" style="text-align-last: center" name="ticket_type"
+                                id="access_type" required>
+                            <option value="">Please Select Access Type</option>
+                            <option value="0">OWNER</option>
+                            <option value="1">MAINTAINER</option>
+                            <option value="2">DEVELOPER</option>
+                            <option value="3">TESTER</option>
+                            <option value="4">REPORTER</option>
+                            <option value="5">GUEST</option>
+                            <option value="6">OTHERS</option>
+
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row">
+                <div class="col-lg-12 col-xs-12 col-sm-12 col-md-12">
+                    <div class="col-md-3 offset-4">
+                        <button type="button" id="add_member_button" class="btn btn-success btn-lg btn-block">
+                            Add Member
+                        </button>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row" style="margin-top:2%">
+        <div class="col-xl-12">
+
+            <!--begin::Portlet-->
+            <div class="kt-portlet">
+                <div class="kt-portlet__head">
+                    <div class="kt-portlet__head-label">
+                        <h3 class="kt-portlet__head-title">
+                            Existing Members
+                        </h3>
+                    </div>
+                </div>
+                <div class="kt-portlet__body">
+
+
+                    <!--begin::Section-->
+                    <div class="kt-section">
+                        <div class="kt-section__content">
+                            <table class="table">
+                                <thead class="thead-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Username</th>
+                                    <th>Access Type</th>
+                                    <th>Added On</th>
+                                    <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for obj in team_list %}
+
+                                    <tr>
+                                        <th scope="row">{{ forloop.counter }}</th>
+                                        <td>{{ obj.people.user.first_name }}</td>
+                                        <td>{{ obj.people.user.last_name }}</td>
+                                        <td>{{ obj.people.user.username }}</td>
+                                        <td>
+                                            <select class="form-control" style="text-align-last: center"
+                                                    name="ticket_type"
+                                                    id="{{ obj.id }}-access-type-update">
+                                                <option value="0"
+                                                        {% if obj.access_level.all.0.access_type|stringformat:"s" == "0" %}selected{% endif %}>
+                                                    OWNER
+                                                </option>
+                                                <option value="1"
+                                                        {% if obj.access_level.all.0.access_type|stringformat:"s" == "1" %}selected{% endif %}>
+                                                    MAINTAINER
+                                                </option>
+                                                <option value="2"
+                                                        {% if obj.access_level.all.0.access_type|stringformat:"s" == "2" %}selected{% endif %}>
+                                                    DEVELOPER
+                                                </option>
+                                                <option value="3"
+                                                        {% if obj.access_level.all.0.access_type|stringformat:"s" == "3" %}selected{% endif %}>
+                                                    TESTER
+                                                </option>
+                                                <option value="4"
+                                                        {% if obj.access_level.all.0.access_type|stringformat:"s" == "4" %}selected{% endif %}>
+                                                    REPORTER
+                                                </option>
+                                                <option value="5"
+                                                        {% if obj.access_level.all.0.access_type|stringformat:"s" == "5" %}selected{% endif %}>
+                                                    GUEST
+                                                </option>
+                                                <option value="6"
+                                                        {% if obj.access_level.all.0.access_type|stringformat:"s" == "6" %}selected{% endif %}>
+                                                    OTHERS
+                                                </option>
+
+                                            </select>
+                                        </td>
+                                        <td>{{ obj.created }}</td>
+                                        <td>
+                                            <a href="#" onclick=update_user_access({{ obj.id }},'{{ obj.access_level.all.0.access_type }}')>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px"
+                                                     viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+                                                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                                        <polygon id="Shape" points="0 0 24 0 24 24 0 24"/>
+                                                        <path d="M17,4 L6,4 C4.79111111,4 4,4.7 4,6 L4,18 C4,19.3 4.79111111,20 6,20 L18,20 C19.2,20 20,19.3 20,18 L20,7.20710678 C20,7.07449854 19.9473216,6.94732158 19.8535534,6.85355339 L17,4 Z M17,11 L7,11 L7,4 L17,4 L17,11 Z"
+                                                              id="Shape" fill="#000000" fill-rule="nonzero"/>
+                                                        <rect id="Rectangle-16" fill="#000000" opacity="0.3" x="12"
+                                                              y="4" width="3" height="5" rx="0.5"/>
+                                                    </g>
+                                                </svg>
+                                            </a>
+                                            &nbsp;
+                                            <a href="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px"
+                                                     viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+                                                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                                        <rect id="bound" x="0" y="0" width="24" height="24"/>
+                                                        <path d="M6,8 L6,20.5 C6,21.3284271 6.67157288,22 7.5,22 L16.5,22 C17.3284271,22 18,21.3284271 18,20.5 L18,8 L6,8 Z"
+                                                              id="round" fill="#000000" fill-rule="nonzero"/>
+                                                        <path d="M14,4.5 L14,4 C14,3.44771525 13.5522847,3 13,3 L11,3 C10.4477153,3 10,3.44771525 10,4 L10,4.5 L5.5,4.5 C5.22385763,4.5 5,4.72385763 5,5 L5,5.5 C5,5.77614237 5.22385763,6 5.5,6 L18.5,6 C18.7761424,6 19,5.77614237 19,5.5 L19,5 C19,4.72385763 18.7761424,4.5 18.5,4.5 L14,4.5 Z"
+                                                              id="Shape" fill="#000000" opacity="0.3"/>
+                                                    </g>
+                                                </svg>
+                                            </a>
+                                        </td>
+
+                                    </tr>
+                                {% endfor %}
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!--end::Section-->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}

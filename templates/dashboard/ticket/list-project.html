@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <div class="container-fluid mt--7">
+        <div class="row">
+            {% for projects in created_projects %}
+                <div class="col-md-3" style="margin-bottom:15px">
+                        <div class="card h-100">
+                            <div class="card-body" style="height: 160px;">
+                                <h5 class="card-title">{{ projects.team_name }}
+                                    <span style="float:right;">
+                                            <span class="kt-badge kt-badge--danger kt-badge--m kt-badge--rounded"> <strong>S</strong> </span>
+                                        <a href="{% url 'add_members_project' team_id=projects.id %}" style="margin: 4px 0 0 4px;float: right;">
+                                            <i class="fa fa-cog pull-right"></i>
+                                        </a>
+                                    </span>
+                                </h5>
+                                <a href="{% url 'list_features' team_id=projects.id %}"><p class="card-text">{{ projects.spliced_description }}</p></a>
+                                <a href="{% url 'create_issue' team_id=projects.id %}" class="btn btn-primary" style="bottom: 5%;float: left;position: absolute;">Create
+                                    Issue</a>
+
+                            </div>
+                    </div>
+                </div>
+            {% endfor %}
+            {% for obj in object_list %}
+                <div class="col-md-3" style="margin-bottom:15px">
+                        <div class="card h-100">
+                            <div class="card-body" style="height: 160px;">
+                                <h5 class="card-title">{{ obj.team.team_name }}
+                                    <span style="float:right;">
+                                        {% for al in obj.access_level.all %}
+                                            <span class="kt-badge kt-badge--{{ al.accesstype_to_color }} kt-badge--m kt-badge--rounded"> {{ al.accesstype_to_string|first }} </span>
+                                        {% endfor %}
+                                        {% if obj.team.created_by == user.user %}
+                                             <span class="kt-badge kt-badge--danger kt-badge--m kt-badge--rounded"> <strong>S</strong> </span>
+                                        {% endif %}
+                                        <a href="{% url 'add_members_project' team_id=obj.team.id %}" style="margin: 4px 0 0 4px;float: right;">
+                                            <i class="fa fa-cog pull-right"></i>
+                                        </a>
+
+                                    </span>
+                                </h5>
+                                <a href="{% url 'list_features' team_id=obj.team.id %}"><p class="card-text">{{ obj.team.spliced_description }}</p></a>
+                                <a href="{% url 'create_issue' team_id=obj.team.id %}" class="btn btn-primary" style="bottom: 5%;float: left;position: absolute;">Create
+                                    Issue</a>
+                            </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

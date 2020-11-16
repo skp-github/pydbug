@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block js %}
+    {{ block.super }}
+    <script src="{% static "/js/select2.min.js" %}"></script>
+    <script src="{% static "/js/init-select2.js" %}"></script>
+    <script src="{% static "/js/jquery.knob.min.js" %}"></script>
+    <script src="{% static "/js/jquery.ui.widget.js" %}"></script>
+    <script src="{% static "/js/jquery.iframe-transport.js" %}"></script>
+    <script src="{% static "/js/jquery.fileupload.js" %}"></script>
+
+
+{% endblock %}
+{% block extrajs %}
+    <script>
+
+
+        var selected_users_list = []
+        $(document).ready(function () {
+
+            $('.assign_user').select2({
+                ajax: {
+                    url: '/api/profile/?ticket_view=True&project_id=' +$('#team_id').val() ,
+                    processResults: function (data) {
+                        return {
+                            results: data.results
+                        };
+                    }
+                }
+            });
+
+
+            $(".desiredDate").datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+            });
+            var ul = $('#upload ul');
+            var file_types = {
+                'jpg': 0,
+                'jpeg': 0,
+                'png': 0,
+                'gif': 0,
+                'pdf': 1,
+                'doc': 2,
+                'docx': 2,
+                'odt': 2,
+                'wav': 4,
+                'mp3': 4,
+                'mp4': 5,
+                'avi': 5,
+                'mov': 5,
+                '3gp': 5,
+            }
+
+
+            $('#create_ticket').click(function (e) {
+                $('#create_ticket_form').submit()
+                e.preventDefault()
+
+            });
+
+            $("#back_btn").click(function () {
+                window.history.back();
+            });
+
+
+            $('#drop a').click(function () {
+                // Simulate a click on the file input button
+                // to show the file browser dialog
+                $(this).parent().find('input').click();
+            });
+
+            // Initialize the jQuery File Upload plugin
+            $('#upload').fileupload({
+                // This element will accept file drag/drop uploading
+                dropZone: $('#drop'),
+
+                // This function is called when a file is added to the queue;
+                // either via the browse button, or via drag/drop:
+                add: function (e, data) {
+
+                    console.log("file type");
+
+                    var ext = data.files[0].type.split("/").pop();
+                    var f_type = file_types[ext.toLowerCase()];
+                    if (f_type === undefined) {
+                        f_type = 3;
+                    }
+                    $("#file_type").val(f_type);
+
+                    var tpl = $('<li class="working list-group-item"><input type="text" value="0" data-width="48" data-height="48"' +
+                        ' data-fgColor="#0788a5" data-readOnly="1" data-bgColor="#3e4043" /><p></p><span></span></li>');
+
+                    // Append the file name and file size
+                    tpl.find('p').text(data.files[0].name)
+                        .append('<br><label>File Size: </label><i>' + formatFileSize(data.files[0].size) + '</i>');
+
+                    // Add the HTML to the UL element
+                    data.context = tpl.appendTo(ul);
+
+                    // Initialize the knob plugin
+                    tpl.find('input').knob();
+
+                    // Listen for clicks on the cancel icon
+                    tpl.find('span').click(function () {
+
+                        if (tpl.hasClass('working')) {
+                            jqXHR.abort();
+                        }
+
+                        tpl.fadeOut(function () {
+                            tpl.remove();
+                        });
+
+                    });
+
+                    // Automatically upload the file once it is added to the queue
+                    var jqXHR = data.submit();
+                },
+
+                progress: function (e, data) {
+
+                    // Calculate the completion percentage of the upload
+                    var progress = parseInt(data.loaded / data.total * 100, 10);
+
+                    // Update the hidden input field and trigger a change
+                    // so that the jQuery knob plugin knows to update the dial
+                    data.context.find('input').val(progress).change();
+
+                    if (progress == 100) {
+                        data.context.removeClass('working');
+                    }
+                },
+
+                done: function (e, data) {
+                    console.log(data.result);
+                    html = '<input type="hidden" name="upfiles_' + data.result.id + '" value=' + data.result.id + '>';
+                    $('#uploadedfiles').append(html);
+                },
+
+
+                fail: function (e, data) {
+                    // Something has gone wrong!
+                    data.context.addClass('error');
+                }
+
+            });
+
+
+            // Prevent the default action when a file is dropped on the window
+            $(document).on('drop dragover', function (e) {
+                e.preventDefault();
+            });
+
+            // Helper function that formats the file sizes
+            function formatFileSize(bytes) {
+                if (typeof bytes !== 'number') {
+                    return '';
+                }
+
+                if (bytes >= 1000000000) {
+                    return (bytes / 1000000000).toFixed(2) + ' GB';
+                }
+
+                if (bytes >= 1000000) {
+                    return (bytes / 1000000).toFixed(2) + ' MB';
+                }
+
+                return (bytes / 1000).toFixed(2) + ' KB';
+            }
+        });
+        $('.desiredDate').each(function () {
+            var minDate = new Date();
+            minDate.setHours(0);
+            minDate.setMinutes(0);
+            minDate.setSeconds(0, 0);
+
+            var $picker = $(this);
+            $picker.datepicker();
+
+            var pickerObject = $picker.data('datepicker');
+
+            $picker.on('changeDate', function (ev) {
+                $picker.datepicker('hide');
+            });
+        });
+    </script>
+{% endblock %}
+{% block content %}
+
+
+
+    <!-- Header -->
+    <div class="header bg-gradient-primary pb-6 pt-1 "></div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="tabs-icons-text-1" role="tabpanel"
+                     aria-labelledby="tabs-icons-text-1-tab">
+                    {{ form.errors }}
+                    <form name="create_ticket_form" id="create_ticket_form" method="post" action=""
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Ticket Type</label>
+                                    <select class="form-control" style="text-align-last: center" name="ticket_type"
+                                            id="ticket_type_select" required>
+                                        <option value="0">Please Select</option>
+                                        <option value="1">REQUIREMENT</option>
+                                        <option value="2">FEATURE</option>
+                                        <option value="3">BUG</option>
+                                        <option value="3">OTHERS</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+
+
+                                    <label>Desired Delivery Date</label>
+                                    <div class="input-group input-group-alternative">
+                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text"><i
+                                                                    class="ni ni-calendar-grid-58"></i></span></div>
+                                        <input class="form-control datepicker desiredDate"
+                                               placeholder="Pick date"
+                                               type="text" name="desired_date" value="" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                <div class="row">
+
+                    <div class="col-md-12">
+                        <div class="form-group ">
+                            <label>Title</label>
+                            <input type="text" class="form-control"
+                                   id="exampleFormControlInput1"
+                                   placeholder="Enter Title For The Ticket" name="ticket_title"
+                                   required>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea class="form-control" id="exampleFormControlTextarea1"
+                                      rows="3"
+                                      placeholder="Enter Ticket Description ..." required
+                                      name="ticket_description"></textarea>
+                        </div>
+                    </div>
+                    <div id="uploadedfiles" style="display: none;">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select class="form-control" style="text-align-last: center"
+                                    name="priority_type" required>
+                                <option value="0">Select Priority Type</option>
+                                <option value="1">LOW</option>
+                                <option value="2">MODERATE</option>
+                                <option value="3">CRITICAL</option>
+                            </select>
+                        </div>
+                    </div>
+
+
+                    <div class="col-md-6">
+                        <div class="form-group ">
+                            <label>Assign To (optional)</label>
+                            <select class="form-control assign_user"
+                                    name="assigned_to">
+                                <option value="">Select User(Optional)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Ref To Old Ticket</label>
+                            <div class="input-group mb-4">
+                                {% if old_ticket %}
+                                    <input class="form-control" placeholder="{{ old_ticket }}"
+                                           type="text" name="old_ticket">
+
+                                {% else %}
+                                    <input class="form-control"
+                                           placeholder="Old Ticket No. (If any)"
+                                           type="text" name="old_ticket">
+                                {% endif %}
+                            <input type="hidden" value="{{ team_id }}" id="team_id">
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+
+                        </div>
+                    </div>
+                </div>
+                </form>
+
+            </div>
+            <div class="row">
+                <div class="col-lg-12 col-xs-12 col-sm-12 col-md-12">
+                    <hr style="height:1px;border:none;color:#333;background-color:#333;"/>
+                    <label>UPLOAD FILES</label>
+
+
+                    <form id="upload" method="post" action="/api/ticketfiles/" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="file_type" id="file_type" value=0>
+                        <div id="drop">
+
+                            <input type="file" name="file" class="btn btn-primary" multiple/>
+                        </div>
+                        <ul>
+                            <!-- The file uploads will be shown here -->
+                        </ul>
+                    </form>
+                </div>
+
+            </div>
+            <hr style="height:1px;border:none;color:#333;background-color:#333;"/>
+            <div class="row">
+                <div class="col-lg-12 col-xs-12 col-sm-12 col-md-12">
+                    <div class="col-md-3 offset-4">
+                        <button type="button" id="create_ticket" class="btn btn-success btn-lg btn-block">Submit
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </div>
+
+
+
+
+
+
+{% endblock %}

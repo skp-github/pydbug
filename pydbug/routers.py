@@ -1,0 +1,18 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+from rest_framework import routers
+
+
+class DefaultRouter(routers.DefaultRouter):
+    """
+    Extends `DefaultRouter` class to add a method for extending url routes from another router.
+    """
+
+    def extend(self, router):
+        """
+        Extend the routes with url routes of the passed in router.
+        :param router:SimpleRouter instance containing route definitions.
+        :return:
+        """
+        self.registry.extend(router.registry)

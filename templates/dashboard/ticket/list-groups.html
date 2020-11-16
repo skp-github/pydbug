@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extrajs %}
+    <script>
+        function create_group() {
+            $.ajax({
+                url: '/api/user-groups/',
+                type: "POST",
+                dataType: "json",
+                data: JSON.stringify({
+                    group_name: $("#group-name").val()
+                }),
+                contentType: "application/json",
+                headers: {
+                    "X-CSRFToken": $("[name=csrfmiddlewaretoken]").val()
+                },
+                success: function (data) {
+                    $('#kt_modal_5').modal('toggle')
+                    location.reload()
+
+
+                }
+
+            });
+
+
+        }
+    </script>
+{% endblock %}
+{% block content %}
+    {% csrf_token %}
+    <div class="container-fluid mt--7">
+        <div class="row">
+{#            {% for projects in created_projects %}#}
+{#                <div class="col-md-3" style="margin-bottom:15px">#}
+{#                        <div class="card h-100">#}
+{#                            <div class="card-body" style="height: 160px;">#}
+{#                                <h5 class="card-title">{{ projects.team_name }}#}
+{#                                    <span style="float:right;">#}
+{#                                            <span class="kt-badge kt-badge--danger kt-badge--m kt-badge--rounded"> <strong>S</strong> </span>#}
+{#                                        <a href="{% url 'add_members_project' team_id=projects.id %}" style="margin: 4px 0 0 4px;float: right;">#}
+{#                                            <i class="fa fa-cog pull-right"></i>#}
+{#                                        </a>#}
+{#                                    </span>#}
+{#                                </h5>#}
+{#                                <p class="card-text">{{ projects.spliced_description }}</p>#}
+{#                                <a href="{% url 'create_issue' team_id=projects.id %}" class="btn btn-primary" style="bottom: 5%;float: left;position: absolute;">View Group Stats</a>#}
+{#                            </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            {% endfor %}#}
+        <div style="float:left;width:95%">
+                            <a style="float:right;"
+                               href="#">
+                                <button type="button"
+                                        class="btn btn-success btn-md btn-block float-right" data-toggle="modal" data-target="#kt_modal_5">Create New Group
+                                </button>
+                            </a>
+
+                </div>
+            {% for obj in object_list %}
+                <div class="col-md-3" style="margin-bottom:15px">
+                        <div class="card h-100">
+                            <div class="card-body" style="height: 160px;">
+                                <h5 class="card-title">{{ obj.group_name }}
+                                    <span style="float:right;">
+                                        <a href="{% url 'add_member_group' team_id=team_id group_id=obj.id %}" style="margin: 4px 0 0 4px;float: right;">
+                                            <i class="fa fa-cog pull-right"></i>
+                                        </a>
+
+                                    </span>
+                                </h5>
+{#                                <p class="card-text">{{ obj.team.spliced_description }}</p>#}
+                                <a href="{% url 'create_issue' team_id=team_id %}" class="btn btn-primary" style="bottom: 5%;float: left;position: absolute;">View Group Stats</a>
+                            </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="modal fade" id="kt_modal_5" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+								<div class="modal-dialog modal-sm" role="document">
+									<div class="modal-content">
+										<div class="modal-header">
+											<h5 class="modal-title" id="exampleModalLabel">New Group</h5>
+											<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+											</button>
+										</div>
+										<div class="modal-body">
+											<form>
+												<div class="form-group">
+													<label for="recipient-name" class="form-control-label">Group Name</label>
+													<input type="text" class="form-control" id="group-name">
+												</div>
+											</form>
+										</div>
+										<div class="modal-footer">
+											<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+											<button type="button" class="btn btn-primary" onclick=create_group()>Save Group</button>
+										</div>
+									</div>
+								</div>
+							</div>
+{% endblock %}
